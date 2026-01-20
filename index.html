@@ -1,43 +1,68 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="stylesheet" href="/src/styles.css" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tauri App</title>
-    <script type="module" src="/src/main.ts" defer></script>
-  </head>
 
-  <body>
-    <main class="container">
-      <h1>Welcome to Tauri</h1>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="/src/styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anansi Ice Particle</title>
+  <script type="module" src="/src/main.ts" defer></script>
+</head>
 
-      <div class="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/src/assets/vite.svg" class="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img
-            src="/src/assets/tauri.svg"
-            class="logo tauri"
-            alt="Tauri logo"
-          />
-        </a>
-        <a href="https://www.typescriptlang.org/docs" target="_blank">
-          <img
-            src="/src/assets/typescript.svg"
-            class="logo typescript"
-            alt="typescript logo"
-          />
-        </a>
+<body>
+  <div id="app" class="app-shell">
+    <!-- Header Bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="app-title">❄️ Ice Particle</span>
       </div>
-      <p>Click on the Tauri logo to learn more about the framework</p>
+      <div class="topbar-right">
+        <button id="btn-load-cartridge" class="btn btn-ghost">📂 Load</button>
+        <button id="btn-settings" class="btn btn-ghost">⚙️</button>
+      </div>
+    </header>
 
-      <form class="row" id="greet-form">
-        <input id="greet-input" placeholder="Enter a name..." />
-        <button type="submit">Greet</button>
-      </form>
-      <p id="greet-msg"></p>
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Scene Panel (Left) -->
+      <section id="scene-panel" class="scene-panel">
+        <div class="scene-layers">
+          <!-- Background Layer -->
+          <div id="layer-bg" class="scene-layer layer-bg">
+            <div class="empty-scene-text">No scene loaded</div>
+          </div>
+          <!-- Midground Layer (effects) -->
+          <div id="layer-mid" class="scene-layer layer-mid"></div>
+          <!-- Character Layer -->
+          <div id="layer-characters" class="scene-layer layer-characters">
+            <!-- Characters will be injected here -->
+          </div>
+        </div>
+        <!-- Scene Controls -->
+        <div class="scene-controls">
+          <button id="btn-set-bg" class="btn btn-sm btn-ghost" title="Set Background">🖼️</button>
+          <button id="btn-add-char" class="btn btn-sm btn-ghost" title="Add Character">👤</button>
+        </div>
+      </section>
+
+      <!-- Chat Panel (Right) -->
+      <section id="chat-panel" class="chat-panel">
+        <!-- Chat Messages -->
+        <div id="chat-messages" class="chat-messages">
+          <!-- Messages will be injected here -->
+          <div class="empty-chat-text">
+            <div class="empty-icon">💬</div>
+            <div>Load a cartridge to begin</div>
+          </div>
+        </div>
+        <!-- Chat Input -->
+        <div class="chat-input-area">
+          <textarea id="chat-input" class="chat-input" placeholder="Type your message..." rows="3"></textarea>
+          <button id="btn-send" class="btn btn-primary btn-send">Send</button>
+        </div>
+      </section>
     </main>
-  </body>
+  </div>
+</body>
+
 </html>
