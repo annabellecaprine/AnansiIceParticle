@@ -4,6 +4,8 @@
 
 import { store } from './lib/store';
 import { events } from './lib/events';
+import { toggleSettings, initSettingsPanel } from './components/SettingsPanel';
+import { getActivePersona } from './lib/persona-service';
 import type { ChatMessage, EmotionTag } from './lib/types';
 
 // ============================================
@@ -14,6 +16,7 @@ const chatMessages = document.getElementById('chat-messages') as HTMLDivElement;
 const chatInput = document.getElementById('chat-input') as HTMLTextAreaElement;
 const btnSend = document.getElementById('btn-send') as HTMLButtonElement;
 const btnLoadCartridge = document.getElementById('btn-load-cartridge') as HTMLButtonElement;
+const btnSettings = document.getElementById('btn-settings') as HTMLButtonElement;
 const layerBg = document.getElementById('layer-bg') as HTMLDivElement;
 const layerCharacters = document.getElementById('layer-characters') as HTMLDivElement;
 
@@ -143,7 +146,14 @@ function renderScene(): void {
 /**
  * Handle send message
  */
-function handleSend(): void {
+import { generate, getSystemPrompt } from './lib/llm-service';
+
+// ... (existing imports/code)
+
+/**
+ * Handle send message
+ */
+async function handleSend(): Promise<void> {
   const content = chatInput.value.trim();
   if (!content) return;
 
@@ -158,19 +168,61 @@ function handleSend(): void {
   store.addMessage(userMessage);
   chatInput.value = '';
 
-  // TODO: Send to LLM and get response
-  // For now, add a mock response
-  setTimeout(() => {
-    const emotions: EmotionTag[] = ['joy', 'neutral', 'flirty'];
-    const mockResponse: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: 'assistant',
-      content: `This is a placeholder response. LLM integration coming soon!`,
-      timestamp: Date.now(),
-      emotions: [emotions[Math.floor(Math.random() * emotions.length)]]
-    };
-    store.addMessage(mockResponse);
-  }, 500);
+  // Get conversation history (map to {role, content})
+  const history = store.get().messages.map(m => ({
+    role: m.role,
+    content: m.content
+  }));
+
+  // Add Assistant placeholder
+  const placeholderId = crypto.randomUUID();
+  store.addMessage({
+    id: placeholderId,
+    role: 'assistant',
+    content: '...',
+    timestamp: Date.now(),
+    emotions: ['neutral']
+  });
+
+  try {
+    const systemPrompt = getSystemPrompt();
+    const responseText = await generate(systemPrompt, history);
+
+    // Update placeholder with real response
+    // Identify emotion (mock for now, or use AURA later)
+    // TODO: AURA integration for emotion detection
+    const emotions: EmotionTag[] = ['neutral'];
+
+    // Replace placeholder in store
+    const messages = store.get().messages.map(m => {
+      if (m.id === placeholderId) {
+        return {
+          ...m,
+          content: responseText,
+          emotions
+        } as ChatMessage;
+      }
+      return m;
+    });
+
+    store.set({ messages });
+
+  } catch (error) {
+    console.error('[IceParticle] Generation Error:', error);
+
+    // Update placeholder with error
+    const messages = store.get().messages.map(m => {
+      if (m.id === placeholderId) {
+        return {
+          ...m,
+          content: `Error: ${error instanceof Error ? error.message : String(error)}`,
+          emotions: ['sadness'] as EmotionTag[]
+        } as ChatMessage;
+      }
+      return m;
+    });
+    store.set({ messages });
+  }
 }
 
 /**
@@ -274,9 +326,18 @@ function init(): void {
     renderScene();
   });
 
+  // Load initial persona
+  store.set({ userPersona: getActivePersona() });
+
   // Bind events
   btnSend.addEventListener('click', handleSend);
   btnLoadCartridge.addEventListener('click', handleLoadCartridge);
+  btnSettings?.addEventListener('click', () => {
+    toggleSettings();
+  });
+
+  // Initialize Settings Panel for side-loading
+  initSettingsPanel();
 
   // Send on Enter (Shift+Enter for newline)
   chatInput.addEventListener('keydown', (e) => {

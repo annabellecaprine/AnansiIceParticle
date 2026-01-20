@@ -148,6 +148,71 @@ export interface ChatMessage {
 }
 
 // ============================================
+// CARTRIDGE / PROJECT SYSTEM
+// ============================================
+
+export interface SourceItem {
+    id: string;
+    label: string;
+    kind: 'custom' | 'system';
+    persistent: boolean;
+    access: string; // e.g. "{{custom.key}}"
+    value?: any;    // Runtime value
+}
+
+export interface PersonaDefinition {
+    name: string;
+    description: string; // The "Persona" text
+    pronouns: string;    // e.g. "he/him", "she/her"
+    avatar?: string;
+}
+
+export interface PersonaProfile extends PersonaDefinition {
+    id: string;
+}
+
+export interface Cartridge {
+    version: string;
+    meta: {
+        title: string;
+        author: string;
+        created: number;
+    };
+    sources: Record<string, SourceItem>;
+    persona: PersonaDefinition;
+    scenario?: string;
+
+    // Links to other assets
+    characters?: string[]; // IDs of chars
+    worldInfo?: string[];
+}
+
+// ============================================
+// APP STATE
+// ============================================
+
+// ============================================
+// APP STATE
+// ============================================
+
+export interface AppState {
+    messages: ChatMessage[];
+    scene: Scene;
+    actors: Record<string, Actor>;
+    character: {
+        name: string;
+        persona: string;
+        scenario: string;
+        firstMessage: string;
+    } | null;
+
+    // Active Cartridge Data
+    cartridge: Cartridge | null;
+
+    isLoaded: boolean;
+}
+
+// ============================================
 // EVENT BUS TYPES
 // ============================================
 

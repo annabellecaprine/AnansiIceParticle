@@ -9,7 +9,9 @@ import type {
     Lorebook,
     Scene,
     ChatMessage,
-    Actor
+    Actor,
+    Cartridge,
+    PersonaProfile
 } from './types';
 import { events } from './events';
 
@@ -17,8 +19,12 @@ import { events } from './events';
 interface AppState {
     /** Loaded cartridge manifest */
     manifest: GlassManifest | null;
+    /** Active Cartridge Data */
+    cartridge: Cartridge | null;
     /** Character card data */
     character: CharacterCard | null;
+    /** Active User Persona */
+    userPersona: PersonaProfile | null;
     /** All loaded lorebooks */
     lorebooks: Lorebook[];
     /** Actor data */
@@ -35,7 +41,9 @@ interface AppState {
 function createInitialState(): AppState {
     return {
         manifest: null,
+        cartridge: null,
         character: null,
+        userPersona: null,
         lorebooks: [],
         actors: {},
         scene: {
