@@ -113,15 +113,25 @@ function renderScene(): void {
     const actor = state.actors[placement.actorId];
     if (!actor) return;
 
-    // TODO: Load actual sprite from actor.sprites
+    // Render character sprite
     const charEl = document.createElement('div');
     charEl.className = `character-sprite position-${placement.position}`;
-    charEl.innerHTML = `
+
+    // Check for actor sprite, fallback to emoji
+    const spriteUrl = actor.sprites?.expressions?.[placement.expression]
+      || actor.sprites?.base
+      || null;
+
+    if (spriteUrl) {
+      charEl.innerHTML = `<img src="${spriteUrl}" alt="${actor.name}" />`;
+    } else {
+      charEl.innerHTML = `
             <div style="font-size: 64px; text-align: center;">
                 ${getEmotionEmoji(placement.expression)}
                 <div style="font-size: 14px; margin-top: 8px;">${actor.name}</div>
             </div>
         `;
+    }
     layerCharacters.appendChild(charEl);
   });
 }
@@ -170,17 +180,37 @@ function handleLoadCartridge(): void {
   // TODO: Open file dialog via Tauri
   console.log('[IceParticle] Load cartridge clicked');
 
-  // Mock: Add a test character and message
+  // Test: Load assets from test folder
   store.set({
     isLoaded: true,
     character: {
-      name: 'Elara',
-      persona: 'A cheerful adventurer',
-      scenario: 'In a tavern',
-      firstMessage: 'Hello, traveler! What brings you here?'
+      name: 'Fox',
+      persona: 'A curious fox roommate',
+      scenario: 'In a cozy dorm room',
+      firstMessage: 'Oh! You\'re finally here! I was just getting settled in. What do you think of our new room?'
     },
     actors: {
-      'elara': { id: 'elara', name: 'Elara' }
+      'fox': {
+        id: 'fox',
+        name: 'Fox',
+        sprites: {
+          base: '/src/assets/test/fox.png',
+          expressions: {
+            joy: '/src/assets/test/fox.png',
+            neutral: '/src/assets/test/fox.png'
+          }
+        }
+      },
+      'wolf': {
+        id: 'wolf',
+        name: 'Wolf',
+        sprites: {
+          base: '/src/assets/test/wolf.png',
+          expressions: {
+            neutral: '/src/assets/test/wolf.png'
+          }
+        }
+      }
     }
   });
 
@@ -194,9 +224,12 @@ function handleLoadCartridge(): void {
   };
   store.addMessage(firstMessage);
 
-  // Set scene
+  // Set scene with background and characters
   store.setScene({
-    characters: [{ actorId: 'elara', position: 'center', expression: 'joy' }]
+    background: '/src/assets/test/background.png',
+    characters: [
+      { actorId: 'fox', position: 'center', expression: 'joy' }
+    ]
   });
 }
 
