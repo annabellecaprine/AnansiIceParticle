@@ -224,13 +224,41 @@ function handleLoadCartridge(): void {
   };
   store.addMessage(firstMessage);
 
-  // Set scene with background and characters
+  // Set scene with background and characters (both Fox and Wolf)
   store.setScene({
     background: '/src/assets/test/background.png',
     characters: [
-      { actorId: 'fox', position: 'center', expression: 'joy' }
+      { actorId: 'fox', position: 'left', expression: 'joy' },
+      { actorId: 'wolf', position: 'right', expression: 'neutral' }
     ]
   });
+}
+
+/**
+ * Toggle between single and multi-character scene (for testing)
+ */
+function toggleMultiCharacter(): void {
+  const state = store.get();
+  const currentCount = state.scene.characters.length;
+
+  if (currentCount === 1) {
+    // Add wolf
+    store.setScene({
+      characters: [
+        { actorId: 'fox', position: 'left', expression: 'joy' },
+        { actorId: 'wolf', position: 'right', expression: 'neutral' }
+      ]
+    });
+    console.log('[IceParticle] Scene: Two characters');
+  } else {
+    // Single character centered
+    store.setScene({
+      characters: [
+        { actorId: 'fox', position: 'center', expression: 'joy' }
+      ]
+    });
+    console.log('[IceParticle] Scene: Single character');
+  }
 }
 
 // ============================================
@@ -273,7 +301,15 @@ function init(): void {
     store.setScene({ characters });
   });
 
-  console.log('[IceParticle] Ready!');
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    // T = Toggle multi-character scene
+    if (e.key === 't' && !e.ctrlKey && !e.altKey && document.activeElement !== chatInput) {
+      toggleMultiCharacter();
+    }
+  });
+
+  console.log('[IceParticle] Ready! (Press T to toggle multi-character scene)');
 }
 
 // Start
