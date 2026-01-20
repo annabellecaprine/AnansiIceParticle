@@ -33,8 +33,11 @@ interface AppState {
     scene: Scene;
     /** Chat history */
     messages: ChatMessage[];
-    /** Is cartridge loaded */
+    /** Is loading cartridge */
     isLoaded: boolean;
+    /** Gallery Mode State */
+    isGalleryMode: boolean;
+    galleryIndex: number;
 }
 
 /** Create initial state */
@@ -51,7 +54,9 @@ function createInitialState(): AppState {
             characters: []
         },
         messages: [],
-        isLoaded: false
+        isLoaded: false,
+        isGalleryMode: false,
+        galleryIndex: 0
     };
 }
 

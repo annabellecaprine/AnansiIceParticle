@@ -99,44 +99,70 @@ function renderChat(): void {
 /**
  * Render scene with background and characters
  */
+/**
+ * Render scene with background and characters
+ */
 function renderScene(): void {
   const state = store.get();
   const scene = state.scene;
 
   // Background
-  if (scene.background) {
-    layerBg.innerHTML = `<img src="${scene.background}" alt="Background" />`;
+  if (state.isGalleryMode && state.cartridge?.assets.gallery.length) {
+    // Gallery Mode
+    const url = state.cartridge.assets.gallery[state.galleryIndex];
+    layerBg.innerHTML = `<img src="${url}" alt="Gallery Image" style="object-fit: contain; width: 100%; height: 100%;" />`;
+
+    // Update controls visibility
+    const galleryControls = document.getElementById('gallery-controls');
+    if (galleryControls) {
+      galleryControls.style.display = 'flex';
+      const counter = document.getElementById('gallery-counter');
+      if (counter) {
+        counter.textContent = `${state.galleryIndex + 1} / ${state.cartridge.assets.gallery.length}`;
+      }
+    }
   } else {
-    layerBg.innerHTML = '<div class="empty-scene-text">No scene loaded</div>';
+    // Normal Mode
+    const galleryControls = document.getElementById('gallery-controls');
+    if (galleryControls) galleryControls.style.display = 'none';
+
+    if (scene.background) {
+      layerBg.innerHTML = `<img src="${scene.background}" alt="Background" />`;
+    } else {
+      layerBg.innerHTML = '<div class="empty-scene-text">No scene loaded</div>';
+    }
   }
 
-  // Characters
+  // Characters (only if not in gallery mode, or overlay?)
+  // For now, hide characters in Gallery Mode
   layerCharacters.innerHTML = '';
-  scene.characters.forEach(placement => {
-    const actor = state.actors[placement.actorId];
-    if (!actor) return;
+  if (!state.isGalleryMode) {
+    scene.characters.forEach(placement => {
+      const actor = state.actors[placement.actorId];
+      if (!actor) return;
 
-    // Render character sprite
-    const charEl = document.createElement('div');
-    charEl.className = `character-sprite position-${placement.position}`;
+      // Render character sprite
+      const charEl = document.createElement('div');
+      charEl.className = `character-sprite position-${placement.position}`;
 
-    // Check for actor sprite, fallback to emoji
-    const spriteUrl = actor.sprites?.expressions?.[placement.expression]
-      || actor.sprites?.base
-      || null;
+      // Check for actor sprite, fallback to emoji
+      const spriteUrl = actor.sprites?.expressions?.[placement.expression]
+        || actor.sprites?.base
+        || null;
 
-    if (spriteUrl) {
-      charEl.innerHTML = `<img src="${spriteUrl}" alt="${actor.name}" />`;
-    } else {
-      charEl.innerHTML = `
-            <div style="font-size: 64px; text-align: center;">
-                ${getEmotionEmoji(placement.expression)}
-                <div style="font-size: 14px; margin-top: 8px;">${actor.name}</div>
-            </div>
-        `;
-    }
-    layerCharacters.appendChild(charEl);
-  });
+      if (spriteUrl) {
+        charEl.innerHTML = `<img src="${spriteUrl}" alt="${actor.name}" />`;
+      } else {
+        charEl.innerHTML = `
+                <div style="font-size: 64px; text-align: center;">
+                    ${getEmotionEmoji(placement.expression)}
+                    <div style="font-size: 14px; margin-top: 8px;">${actor.name}</div>
+                </div>
+            `;
+      }
+      layerCharacters.appendChild(charEl);
+    });
+  }
 }
 
 // ============================================
@@ -228,62 +254,115 @@ async function handleSend(): Promise<void> {
 /**
  * Handle load cartridge button
  */
-function handleLoadCartridge(): void {
-  // TODO: Open file dialog via Tauri
-  console.log('[IceParticle] Load cartridge clicked');
+import { loadGlassFile } from './lib/glass-loader';
+import type { Actor, SpriteConfig } from './lib/types';
 
-  // Test: Load assets from test folder
-  store.set({
-    isLoaded: true,
-    character: {
-      name: 'Fox',
-      persona: 'A curious fox roommate',
-      scenario: 'In a cozy dorm room',
-      firstMessage: 'Oh! You\'re finally here! I was just getting settled in. What do you think of our new room?'
-    },
-    actors: {
-      'fox': {
-        id: 'fox',
-        name: 'Fox',
-        sprites: {
-          base: '/src/assets/test/fox.png',
-          expressions: {
-            joy: '/src/assets/test/fox.png',
-            neutral: '/src/assets/test/fox.png'
-          }
-        }
-      },
-      'wolf': {
-        id: 'wolf',
-        name: 'Wolf',
-        sprites: {
-          base: '/src/assets/test/wolf.png',
-          expressions: {
-            neutral: '/src/assets/test/wolf.png'
-          }
+// ... (existing imports)
+
+/**
+ * Handle load cartridge button
+ */
+function handleLoadCartridge(): void {
+  // Create hidden input
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.glass,.zip'; // Accept .zip for easier testing
+
+  input.onchange = async (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+
+    try {
+      console.log('[IceParticle] Loading:', file.name);
+      const cartridge = await loadGlassFile(file);
+
+      console.log('[IceParticle] Loaded:', cartridge);
+
+      // 1. Construct Actors from Sprites
+      const newActors: Record<string, Actor> = {};
+
+      // If we have a character card, ensure it exists as an actor
+      const charName = cartridge.character?.name || 'Unknown';
+      const charId = charName.toLowerCase().replace(/\s+/g, '_');
+
+      // Auto-detect actors from sprite folders
+      Object.entries(cartridge.assets.sprites).forEach(([actorId, expressions]) => {
+        const config: SpriteConfig = {
+          expressions: expressions as Record<string, string>,
+          base: Object.values(expressions)[0] // Default to first sprite
+        };
+
+        newActors[actorId] = {
+          id: actorId,
+          name: actorId === charId ? charName : (actorId.charAt(0).toUpperCase() + actorId.slice(1)),
+          sprites: config
+        };
+      });
+
+      // 2. Determine Scene
+      // Pick first background
+      const bgNames = Object.keys(cartridge.assets.backgrounds);
+      const firstBg = bgNames.length > 0 ? cartridge.assets.backgrounds[bgNames[0]] : undefined;
+
+      // Gallery Mode Check
+      if (!firstBg && cartridge.assets.gallery.length > 0) {
+        console.log('[IceParticle] Gallery Mode Active');
+        store.set({
+          isGalleryMode: true,
+          galleryIndex: 0,
+          manifest: cartridge.manifest,
+          cartridge: cartridge,
+          character: cartridge.character || null,
+          actors: newActors,
+          messages: []
+        });
+
+        // Render manually or wait for subscription
+        return; // Skip normal scene setup
+      } else {
+
+        // Normal Scene
+        store.setScene({
+          background: firstBg,
+          characters: [] // Start empty, or add main char?
+        });
+      }
+
+      // 3. Update Store
+      store.set({
+        isLoaded: true,
+        manifest: cartridge.manifest,
+        cartridge: cartridge,
+        character: cartridge.character || null,
+        actors: newActors,
+        messages: [] // Clear chat
+      });
+
+      // 4. Initial Greeting
+      if (cartridge.character?.firstMessage) {
+        store.addMessage({
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: cartridge.character.firstMessage,
+          timestamp: Date.now(),
+          speakerId: charId // Try to link to actor
+        });
+
+        // If we have sprites for this char, show them?
+        if (newActors[charId]) {
+          store.setScene({
+            characters: [{ actorId: charId, position: 'center', expression: 'neutral' }]
+          });
         }
       }
+
+    } catch (err) {
+      console.error('[IceParticle] Load Failed:', err);
+      alert('Failed to load cartridge: ' + (err instanceof Error ? err.message : String(err)));
     }
-  });
-
-  // Add first message
-  const firstMessage: ChatMessage = {
-    id: crypto.randomUUID(),
-    role: 'assistant',
-    content: store.get().character?.firstMessage || 'Hello!',
-    timestamp: Date.now(),
-    emotions: ['joy']
   };
-  store.addMessage(firstMessage);
 
-  // Set scene with background and characters (both Fox and Wolf)
-  store.setScene({
-    background: '/src/assets/test/background.png',
-    characters: [
-      { actorId: 'fox', position: 'left', expression: 'joy' },
-      { actorId: 'wolf', position: 'right', expression: 'neutral' }
-    ]
-  });
+  input.click();
 }
 
 /**
@@ -338,6 +417,25 @@ function init(): void {
 
   // Initialize Settings Panel for side-loading
   initSettingsPanel();
+
+  // Gallery Navigation
+  document.getElementById('btn-gallery-prev')?.addEventListener('click', () => {
+    const state = store.get();
+    if (!state.isGalleryMode || !state.cartridge?.assets.gallery.length) return;
+
+    let newIndex = state.galleryIndex - 1;
+    if (newIndex < 0) newIndex = state.cartridge.assets.gallery.length - 1;
+    store.set({ galleryIndex: newIndex });
+  });
+
+  document.getElementById('btn-gallery-next')?.addEventListener('click', () => {
+    const state = store.get();
+    if (!state.isGalleryMode || !state.cartridge?.assets.gallery.length) return;
+
+    let newIndex = state.galleryIndex + 1;
+    if (newIndex >= state.cartridge.assets.gallery.length) newIndex = 0;
+    store.set({ galleryIndex: newIndex });
+  });
 
   // Send on Enter (Shift+Enter for newline)
   chatInput.addEventListener('keydown', (e) => {

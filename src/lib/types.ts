@@ -172,19 +172,16 @@ export interface PersonaProfile extends PersonaDefinition {
 }
 
 export interface Cartridge {
-    version: string;
-    meta: {
-        title: string;
-        author: string;
-        created: number;
+    manifest: GlassManifest;
+    character?: CharacterCard;
+    lorebook?: Lorebook;
+    assets: {
+        backgrounds: Record<string, string>;
+        midgrounds: Record<string, string>;
+        foregrounds: Record<string, string>;
+        sprites: Record<string, Record<string, string>>; // actor -> expression -> url
+        gallery: string[];
     };
-    sources: Record<string, SourceItem>;
-    persona: PersonaDefinition;
-    scenario?: string;
-
-    // Links to other assets
-    characters?: string[]; // IDs of chars
-    worldInfo?: string[];
 }
 
 // ============================================

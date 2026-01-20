@@ -42,26 +42,39 @@
         <div class="scene-controls">
           <button id="btn-set-bg" class="btn btn-sm btn-ghost" title="Set Background">🖼️</button>
           <button id="btn-add-char" class="btn btn-sm btn-ghost" title="Add Character">👤</button>
-        </div>
-      </section>
 
-      <!-- Chat Panel (Right) -->
-      <section id="chat-panel" class="chat-panel">
-        <!-- Chat Messages -->
-        <div id="chat-messages" class="chat-messages">
-          <!-- Messages will be injected here -->
-          <div class="empty-chat-text">
-            <div class="empty-icon">💬</div>
-            <div>Load a cartridge to begin</div>
+          <!-- Gallery Controls (Hidden by default) -->
+          <div id="gallery-controls" class="gallery-controls" style="display: none;">
+            <button id="btn-gallery-prev" class="btn btn-sm btn-ghost" title="Previous Image">◀️</button>
+            <span id="gallery-counter" class="gallery-counter">1 / 1</span>
+            <button id="btn-gallery-next" class="btn btn-sm btn-ghost" title="Next Image">▶️</button>
           </div>
+        </div> <!-- Gallery Controls (Hidden by default) -->
+        <div id="gallery-controls" class="gallery-controls" style="display: none;">
+          <button id="btn-gallery-prev" class="btn btn-sm btn-ghost" title="Previous Image">◀️</button>
+          <span id="gallery-counter" class="gallery-counter">1 / 1</span>
+          <button id="btn-gallery-next" class="btn btn-sm btn-ghost" title="Next Image">▶️</button>
         </div>
-        <!-- Chat Input -->
-        <div class="chat-input-area">
-          <textarea id="chat-input" class="chat-input" placeholder="Type your message..." rows="3"></textarea>
-          <button id="btn-send" class="btn btn-primary btn-send">Send</button>
-        </div>
-      </section>
-    </main>
+  </div>
+  </section>
+
+  <!-- Chat Panel (Right) -->
+  <section id="chat-panel" class="chat-panel">
+    <!-- Chat Messages -->
+    <div id="chat-messages" class="chat-messages">
+      <!-- Messages will be injected here -->
+      <div class="empty-chat-text">
+        <div class="empty-icon">💬</div>
+        <div>Load a cartridge to begin</div>
+      </div>
+    </div>
+    <!-- Chat Input -->
+    <div class="chat-input-area">
+      <textarea id="chat-input" class="chat-input" placeholder="Type your message..." rows="3"></textarea>
+      <button id="btn-send" class="btn btn-primary btn-send">Send</button>
+    </div>
+  </section>
+  </main>
   </div>
 </body>
 
